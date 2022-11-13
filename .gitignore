@@ -1,0 +1,10 @@
+# Pycharm
+.idea/
+
+# macOs
+.DS_Store
+
+# Environments
+.venv
+venv/
+
