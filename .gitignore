@@ -8,3 +8,5 @@
 .venv
 venv/
 
+# google cloud auth key
+pc-ctrl-key.json
