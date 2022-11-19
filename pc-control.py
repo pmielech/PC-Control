@@ -13,7 +13,7 @@ run = 0
 state_machine = 0
 
 curr_path = os.getcwd()
-commands_dict = {"exit": 0, "help": 1, "go to": 2, "make folder": 3, "current path": 4}
+commands_dict = {"exit": 0, "help": 1, "go to": 2, "list all": 3, "make folder": 4, "current path": 5}
 config = speech.RecognitionConfig(sample_rate_hertz=44100, enable_automatic_punctuation=True, language_code='en-US')
 try:
     client = speech.SpeechClient.from_service_account_json('pc-ctrl-key.json')
@@ -35,6 +35,12 @@ def convert_to_wav():
     global audio
     recorded_wav = rec.AudioData.get_wav_data(recorded)
     audio = speech.RecognitionAudio(content=recorded_wav)
+
+
+def list_all_comm():
+    print(f'\033[93m' + "~List all~" + '\033[0m')
+    print("Current folder: {}".format(curr_path))
+    print("Contains: {}".format(os.listdir()))
 
 
 def get_response():
@@ -100,6 +106,9 @@ def execute_comm():
         return
     elif comm == 2:
         go_to_comm()
+        return
+    elif comm == 3:
+        list_all_comm()
         return
 
 
