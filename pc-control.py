@@ -15,7 +15,7 @@ state_machine = 0
 curr_path = os.getcwd()
 command_dict = {"exit": 0, "help": 1, "go to": 2, "list all": 3, "make folder": 4, "where am i": 5, "go back": 6,
                 }
-config = speech.RecognitionConfig(sample_rate_hertz=44100, enable_automatic_punctuation=True, language_code='en-US')
+config = speech.RecognitionConfig(sample_rate_hertz=16000, enable_automatic_punctuation=True, language_code='en-US')
 try:
     client = speech.SpeechClient.from_service_account_json('pc-ctrl-key.json')
     run = 1
@@ -49,8 +49,8 @@ def get_response():
     global empty_message
     try:
         received_response = client.recognize(config=config, audio=audio)
-    except:
-        print("Failed get the response")
+    except Exception as e:
+        print(e)
         sys.exit()
     try:
         response = ("{}".format(received_response.results[0].alternatives[0].transcript)).lower().rstrip("!.?")
