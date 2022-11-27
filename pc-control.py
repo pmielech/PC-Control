@@ -3,7 +3,6 @@ from google.cloud import speech
 import speech_recognition as rec
 import os
 
-
 comm = -1
 empty_message = 0
 global recorded
@@ -11,11 +10,14 @@ global audio
 global response
 run = 0
 state_machine = 0
+folder_container = ""
+go_to_id = 0
+dev_input = sys.argv
 
 curr_path = os.getcwd()
 command_dict = {"exit": 0, "help": 1, "go to": 2, "list all": 3, "make folder": 4, "where am i": 5, "go back": 6,
                 }
-config = speech.RecognitionConfig(sample_rate_hertz=16000, enable_automatic_punctuation=True, language_code='en-US')
+config = speech.RecognitionConfig(enable_automatic_punctuation=True, language_code='en-US')
 try:
     client = speech.SpeechClient.from_service_account_json('pc-ctrl-key.json')
     run = 1
@@ -27,7 +29,7 @@ except FileNotFoundError:
 def record_data():
     global recorded
     with rec.Microphone() as source:
-        print("Listening...\n", end="")
+        print('Listening...', end=' ')
         recorded = rec.Recognizer().listen(source)
     convert_to_wav()
 
@@ -39,9 +41,11 @@ def convert_to_wav():
 
 
 def list_all_comm():
+    global folder_container
+    folder_container = os.listdir()
     print(f'\033[93m' + "~LIST ALL~" + '\033[0m')
     print("Current folder: {}".format(curr_path))
-    print("Contains: {}".format(os.listdir()))
+    print("Contains: {}".format(folder_container))
 
 
 def get_response():
@@ -61,6 +65,16 @@ def get_response():
         response = ""
         return
     print(f'\033[92m' + response + '\033[0m')
+
+
+def convert_to_numeric():
+    # TODO
+    pass
+
+
+def safe_word():
+    # TODO
+    pass
 
 
 def current_directory_comm():
@@ -102,17 +116,44 @@ def go_to_comm():
     global curr_path
     global response
     global comm
+    global folder_container
+    global go_to_id
+    ready_to_go = 0
     print(f'\033[93m' + "~GO TO MODE~" + '\033[0m')
     print("Current path: {}".format(curr_path))
-    record_data()
-    get_response()
+    list_all_comm()
+    if len(dev_input) > 1:
+        response = "test path"
+    else:
+        record_data()
+        get_response()
     try:
-        if os.path.exists(os.path.join(curr_path, response)):
-            curr_path = os.path.join(curr_path, response)
-            print("Going to {}".format(curr_path))
-            os.chdir(curr_path)
+        response = response.strip().split()
+        for idx, file in enumerate(folder_container):
+            if len(response) > 1:
+                if response[0] in file.lower():
+                    if response[1] in file.lower():
+                        ready_to_go = 1
+                        go_to_id = idx
+                        break
+            elif len(response) == 1:
+                if response[0] in file.lower():
+                    ready_to_go = 1
+                    go_to_id = idx
+                    break
+            else:
+                print("Sorry, can't find that folder")
+                return
+        if ready_to_go == 0:
+            print("Sorry, can't find that folder.")
+            return
         else:
-            print("Sorry directory doesn't exist")
+            if os.path.exists(os.path.join(curr_path, folder_container[go_to_id])):
+                curr_path = os.path.join(curr_path, folder_container[go_to_id])
+                print("Going to {}".format(curr_path))
+                os.chdir(curr_path)
+            else:
+                print("Sorry directory doesn't exist")
     except Exception as e:
         print(e)
 
@@ -181,7 +222,11 @@ def execute_comm():
 
 
 while run == 1:
-    record_data()
-    get_response()
-    recognize_comm()
+    if len(dev_input) > 1:
+        comm = 2
+    else:
+        record_data()
+        get_response()
+        recognize_comm()
+
     execute_comm()
