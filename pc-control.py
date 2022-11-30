@@ -15,6 +15,19 @@ go_to_id = 0
 dev_input = sys.argv
 
 curr_path = os.getcwd()
+help_dict = {"Help": "Prints this additional information below.",
+             "Go to": "Enables GO TO MODE. This command allows user to move between directories in current path.\n"
+                      "Command at launch prints folder content."
+                      "First recorded words, after waking this command, will be recognised as program direction.\n"
+                      "Warning! Currently, the program supports a maximum directory name consisting of two words",
+             "List all": "Prints out the content of the current path, where the user is located.",
+             "Make folder": "Enables MAKE FOLDER mode. This command allows user to create directory in the current "
+                            "path.\n"
+                            "First recorded words, after waking this command, will be recognised as program direction.",
+             "Where am I": "Prints the user currents path and prints content of the current directory.",
+             "Go back": "The command moves up one directory.",
+             "Exit": "Command closes the program"
+             }
 command_dict = {"exit": 0, "help": 1, "go to": 2, "list all": 3, "make folder": 4, "where am i": 5, "go back": 6,
                 }
 config = speech.RecognitionConfig(enable_automatic_punctuation=True, language_code='en-US')
@@ -185,9 +198,9 @@ def make_folder_comm():
 def print_help():
     print(f'\033[93m' + "~HELP~"'\033[0m')
     help_string = "Available commands: "
-    for command in command_dict:
-        help_string += command + ', '
     print(f'\033[93m' + help_string.rstrip(", ") + '\033[0m')
+    for command in help_dict:
+        print(f'\033[93m' + "{}: {}\n".format(command, help_dict.get(command)) + '\033[0m')
 
 
 def execute_comm():
