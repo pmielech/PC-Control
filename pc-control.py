@@ -2,6 +2,7 @@ import sys
 from google.cloud import speech
 import speech_recognition as rec
 import os
+import shlex
 
 comm = -1
 empty_message = 0
@@ -29,6 +30,7 @@ help_dict = {"Help": "Prints this additional information below.",
              "Exit": "Command closes the program"
              }
 command_dict = {"exit": 0, "help": 1, "go to": 2, "list all": 3, "make folder": 4, "where am i": 5, "go back": 6,
+                "open file": 7,
                 }
 config = speech.RecognitionConfig(enable_automatic_punctuation=True, language_code='en-US')
 try:
@@ -37,6 +39,44 @@ try:
 except FileNotFoundError:
     print("~Failed to read google account json~")
     sys.exit()
+
+
+def open_default():
+    global folder_container
+    global curr_path
+    global response
+    global comm
+    file_id = 0
+    ready_to_go = 0
+    print(f'\033[93m' + "~Open file~" + '\033[0m')
+    list_all_comm(False)
+    record_data()
+    get_response()
+    response = response.strip().split()
+    try:
+        for idx, file in enumerate(folder_container):
+            if len(response) > 1:
+                if response[0] in file.lower():
+                    if response[1] in file.lower():
+                        ready_to_go = 1
+                        file_id = idx
+                        break
+            elif len(response) == 1:
+                if response[0] in file.lower():
+                    ready_to_go = 1
+                    file_id = idx
+                    break
+            else:
+                print("Sorry, can't find that file")
+                return
+        if ready_to_go != 0:
+            os.system("open " + shlex.quote(folder_container[file_id]))
+            return
+        print("Sorry can't find that file in this directory")
+        return
+    except Exception as e:
+        print(e)
+        return
 
 
 def record_data():
@@ -53,10 +93,11 @@ def convert_to_wav():
     audio = speech.RecognitionAudio(content=recorded_wav)
 
 
-def list_all_comm():
+def list_all_comm(mode: bool):
     global folder_container
     folder_container = os.listdir()
-    print(f'\033[93m' + "~LIST ALL~" + '\033[0m')
+    if mode:
+        print(f'\033[93m' + "~LIST ALL~" + '\033[0m')
     print("Current folder: {}".format(curr_path))
     print("Contains: {}".format(folder_container))
 
@@ -134,7 +175,7 @@ def go_to_comm():
     ready_to_go = 0
     print(f'\033[93m' + "~GO TO MODE~" + '\033[0m')
     print("Current path: {}".format(curr_path))
-    list_all_comm()
+    list_all_comm(False)
     if len(dev_input) > 1:
         response = "test path"
     else:
@@ -218,7 +259,7 @@ def execute_comm():
         go_to_comm()
         return
     elif comm == 3:
-        list_all_comm()
+        list_all_comm(True)
         return
     elif comm == 4:
         make_folder_comm()
@@ -228,6 +269,9 @@ def execute_comm():
         return
     elif comm == 6:
         go_back_comm()
+        return
+    elif comm == 7:
+        open_default()
         return
     else:
         print("Can't recognize, repeat the command.")
