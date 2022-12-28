@@ -5,11 +5,11 @@ import os
 import shlex
 
 comm = -1
-empty_message = 0
+empty_message = False
 global recorded
 global audio
 global response
-run = 0
+authorised = False
 state_machine = 0
 folder_container = ""
 go_to_id = 0
@@ -35,41 +35,49 @@ command_dict = {"exit": 0, "help": 1, "go to": 2, "list all": 3, "make folder": 
 config = speech.RecognitionConfig(enable_automatic_punctuation=True, language_code='en-US')
 try:
     client = speech.SpeechClient.from_service_account_json('pc-ctrl-key.json')
-    run = 1
+    authorised = True
 except FileNotFoundError:
     print("~Failed to read google account json~")
     sys.exit()
+
+
+def listen_comm():
+    global empty_message
+    global response
+    empty_message = True
+    while empty_message:
+        record_data()
+        get_response()
 
 
 def open_default():
     global folder_container
     global curr_path
     global response
-    global comm
     file_id = 0
-    ready_to_go = 0
+    ready_to_go = False
     print(f'\033[93m' + "~Open file~" + '\033[0m')
     list_all_comm(False)
-    record_data()
-    get_response()
+    listen_comm()
     response = response.strip().split()
     try:
+        response_len = len(response)
+        match = 0
         for idx, file in enumerate(folder_container):
-            if len(response) > 1:
-                if response[0] in file.lower():
-                    if response[1] in file.lower():
-                        ready_to_go = 1
+            for ele in response:
+                if ele in file.lower():
+                    match += 1
+                    if match == response_len:
+                        ready_to_go = True
                         file_id = idx
                         break
-            elif len(response) == 1:
-                if response[0] in file.lower():
-                    ready_to_go = 1
-                    file_id = idx
-                    break
-            else:
-                print("Sorry, can't find that file")
-                return
-        if ready_to_go != 0:
+            if ready_to_go:
+                break
+
+        else:
+            print("Sorry, can't find that file")
+            return
+        if ready_to_go:
             os.system("open " + shlex.quote(folder_container[file_id]))
             return
         print("Sorry can't find that file in this directory")
@@ -112,23 +120,13 @@ def get_response():
         sys.exit()
     try:
         response = ("{}".format(received_response.results[0].alternatives[0].transcript)).lower().rstrip("!.?")
-        empty_message = 0
+        empty_message = False
     except IndexError:
         print("Empty message")
-        empty_message = 1
+        empty_message = True
         response = ""
         return
     print(f'\033[92m' + response + '\033[0m')
-
-
-def convert_to_numeric():
-    # TODO
-    pass
-
-
-def safe_word():
-    # TODO
-    pass
 
 
 def current_directory_comm():
@@ -140,7 +138,7 @@ def recognize_comm():
     global response
     global comm
     global empty_message
-    if empty_message == 1:
+    if empty_message:
         return
     elif response in command_dict.keys():
         comm = command_dict.get(response)
@@ -169,36 +167,33 @@ def go_back_comm():
 def go_to_comm():
     global curr_path
     global response
-    global comm
     global folder_container
     global go_to_id
-    ready_to_go = 0
+    ready_to_go = False
     print(f'\033[93m' + "~GO TO MODE~" + '\033[0m')
-    print("Current path: {}".format(curr_path))
     list_all_comm(False)
     if len(dev_input) > 1:
         response = "test path"
     else:
-        record_data()
-        get_response()
+        listen_comm()
     try:
         response = response.strip().split()
+        response_len = len(response)
+        match = 0
         for idx, file in enumerate(folder_container):
-            if len(response) > 1:
-                if response[0] in file.lower():
-                    if response[1] in file.lower():
-                        ready_to_go = 1
+            for ele in response:
+                if ele in file.lower():
+                    match += 1
+                    if match == response_len:
+                        ready_to_go = True
                         go_to_id = idx
                         break
-            elif len(response) == 1:
-                if response[0] in file.lower():
-                    ready_to_go = 1
-                    go_to_id = idx
-                    break
-            else:
-                print("Sorry, can't find that folder")
-                return
-        if ready_to_go == 0:
+            if ready_to_go:
+                break
+        else:
+            print("Sorry, can't find that folder")
+            return
+        if not ready_to_go:
             print("Sorry, can't find that folder.")
             return
         else:
@@ -215,12 +210,10 @@ def go_to_comm():
 def make_folder_comm():
     global curr_path
     global response
-    global comm
     print(f'\033[93m' + "~MAKE FOLDER~"'\033[0m')
     print("Current path: {}".format(curr_path))
     print("Contains: {}".format(os.listdir()))
-    record_data()
-    get_response()
+    listen_comm()
     try:
         if os.path.exists(os.path.join(curr_path, response)):
             print("Path already exists.")
@@ -247,7 +240,7 @@ def print_help():
 def execute_comm():
     global comm
     global empty_message
-    if empty_message == 1 or comm == -1:
+    if empty_message or comm == -1:
         return
     elif comm == 0:
         print("Exiting...")
@@ -278,7 +271,7 @@ def execute_comm():
         return
 
 
-while run == 1:
+while authorised:
     if len(dev_input) > 1:
         comm = 2
     else:
