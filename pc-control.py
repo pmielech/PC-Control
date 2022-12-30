@@ -33,8 +33,13 @@ command_dict = {"exit": 0, "help": 1, "go to": 2, "list all": 3, "make folder": 
                 "open file": 7,
                 }
 config = speech.RecognitionConfig(enable_automatic_punctuation=True, language_code='en-US')
+if hasattr(sys, "_MEIPASS"):
+    json_path = os.path.join(sys._MEIPASS, 'pc-ctrl-key.json')
+else:
+    json_path = 'pc-ctrl-key.json'
+
 try:
-    client = speech.SpeechClient.from_service_account_json('pc-ctrl-key.json')
+    client = speech.SpeechClient.from_service_account_json(json_path)
     authorised = True
 except FileNotFoundError:
     print("~Failed to read google account json~")
