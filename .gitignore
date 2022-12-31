@@ -10,3 +10,8 @@ venv/
 
 # google cloud auth key
 pc-ctrl-key.json
+
+# pyinstaller
+*dist/
+*build/
+pc-control.spec
